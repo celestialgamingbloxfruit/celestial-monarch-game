@@ -1,21 +1,4 @@
-const config = {
-    type: Phaser.AUTO,
-    width: 1200,
-    height: 700,
-    physics: {
-        default: 'arcade',
-        arcade: {
-            gravity: { y: 400 },
-            debug: false,
-            enableBody: true
-        }
-    },
-    scene: GameScene,
-    render: { pixelArt: true }
-};
-
-const game = new Phaser.Game(config);
-
+// Define GameScene class FIRST before using it in config
 class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
@@ -32,7 +15,7 @@ class GameScene extends Phaser.Scene {
         this.hasRumbleFruit = false;
         this.v4PowerActive = false;
         this.v4PowerDuration = 0;
-        this.v4PowerMaxDuration = 4000; // 4 seconds
+        this.v4PowerMaxDuration = 4000;
         this.sanguineArtActive = false;
         
         // Combat
@@ -44,18 +27,12 @@ class GameScene extends Phaser.Scene {
         this.enemies = [];
         this.boss = null;
         this.bossHealth = 0;
-        this.bossDamageDelay = 0;
         
         // Story
         this.witch = null;
         this.bestFriend = null;
-        this.storyProgression = 0;
         this.gameOver = false;
         this.gameWon = false;
-        
-        // UI
-        this.dialogueActive = false;
-        this.currentDialogueIndex = 0;
     }
 
     preload() {
@@ -85,8 +62,7 @@ class GameScene extends Phaser.Scene {
             z: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z),
             x: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X),
             c: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C),
-            f: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F),
-            enter: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER)
+            f: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F)
         };
         
         // HUD
@@ -154,21 +130,15 @@ class GameScene extends Phaser.Scene {
         this.physics.add.existing(this.player);
         this.player.body.setBounce(0);
         this.player.body.setCollideWorldBounds(true);
-        this.player.body.onWorldBounds = true;
         this.physics.add.collider(this.player, this.ground);
-        
         this.player.isAttacking = false;
     }
 
     handlePlayerMovement() {
-        let moving = false;
-        
         if (this.keys.a.isDown) {
             this.player.body.setVelocityX(-this.playerSpeed);
-            moving = true;
         } else if (this.keys.d.isDown) {
             this.player.body.setVelocityX(this.playerSpeed);
-            moving = true;
         } else {
             this.player.body.setVelocityX(0);
         }
@@ -181,23 +151,19 @@ class GameScene extends Phaser.Scene {
     handlePlayerAttacks() {
         const now = this.time.now;
         
-        // Z - Normal Attack
         if (this.keys.z.isDown && (now - this.lastAttackTime > this.attackCooldown)) {
             this.performNormalAttack();
             this.lastAttackTime = now;
         }
         
-        // X - Rumble Fruit (Lightning)
         if (this.hasRumbleFruit && this.keys.x.isDown) {
             this.performRumbleFruitAttack();
         }
         
-        // C - V4 Power
         if (this.keys.c.isDown && !this.v4PowerActive && this.currentChapter >= 3) {
             this.activateV4Power();
         }
         
-        // F - Sanguine Art
         if (this.keys.f.isDown && this.currentChapter >= 5) {
             this.performSanguineArt();
         }
@@ -208,29 +174,23 @@ class GameScene extends Phaser.Scene {
         this.physics.add.existing(attackHitbox);
         attackHitbox.setAlpha(0.5);
         
-        // Damage enemies
         this.enemies.forEach(enemy => {
-            const dist = Phaser.Math.Distance.Between(
-                attackHitbox.x, attackHitbox.y,
-                enemy.x, enemy.y
-            );
-            if (dist < 100) {
-                enemy.health -= 30;
-                enemy.setFillStyle(0xff0000);
-                this.time.delayedCall(100, () => enemy.setFillStyle(0x00aa00));
+            if (enemy && enemy.active) {
+                const dist = Phaser.Math.Distance.Between(attackHitbox.x, attackHitbox.y, enemy.x, enemy.y);
+                if (dist < 100) {
+                    enemy.health -= 30;
+                    enemy.setFillStyle(0xff0000);
+                    this.time.delayedCall(100, () => {
+                        if (enemy && enemy.active) enemy.setFillStyle(0x00aa00);
+                    });
+                }
             }
         });
         
-        // Damage boss
         if (this.boss && this.bossHealth > 0) {
-            const dist = Phaser.Math.Distance.Between(
-                attackHitbox.x, attackHitbox.y,
-                this.boss.x, this.boss.y
-            );
+            const dist = Phaser.Math.Distance.Between(attackHitbox.x, attackHitbox.y, this.boss.x, this.boss.y);
             if (dist < 120) {
                 this.bossHealth -= 25;
-                this.boss.setFillStyle(0xff0000);
-                this.time.delayedCall(100, () => this.boss.setFillStyle(0xff0000));
             }
         }
         
@@ -240,7 +200,7 @@ class GameScene extends Phaser.Scene {
     performRumbleFruitAttack() {
         if (this.player.rumbleCooldown) return;
         
-        this.showDialogue('PLAYER', 'RUMBLE FRUIT ATTACK!', 1000);
+        this.showDialogue('PLAYER', '⚡ RUMBLE FRUIT ATTACK!', 1000);
         
         for (let i = 0; i < 5; i++) {
             const lightning = this.add.rectangle(
@@ -251,15 +211,15 @@ class GameScene extends Phaser.Scene {
             this.physics.add.existing(lightning);
             lightning.setAlpha(0.7);
             
-            // Damage all enemies
             this.enemies.forEach(enemy => {
-                const dist = Phaser.Math.Distance.Between(lightning.x, lightning.y, enemy.x, enemy.y);
-                if (dist < 150) {
-                    enemy.health -= 50;
+                if (enemy && enemy.active) {
+                    const dist = Phaser.Math.Distance.Between(lightning.x, lightning.y, enemy.x, enemy.y);
+                    if (dist < 150) {
+                        enemy.health -= 50;
+                    }
                 }
             });
             
-            // Damage boss
             if (this.boss && this.bossHealth > 0) {
                 const dist = Phaser.Math.Distance.Between(lightning.x, lightning.y, this.boss.x, this.boss.y);
                 if (dist < 150) {
@@ -279,15 +239,14 @@ class GameScene extends Phaser.Scene {
     activateV4Power() {
         this.v4PowerActive = true;
         this.v4PowerDuration = this.v4PowerMaxDuration;
-        this.showDialogue('NAFISA', 'V4 POWER ACTIVATED!', 1000);
-        
+        this.showDialogue('NAFISA', '💜 V4 POWER ACTIVATED!', 1000);
         this.player.setFillStyle(0xff00ff);
-        this.playerSpeed = 450; // Faster movement
+        this.playerSpeed = 450;
     }
 
     updateV4Power() {
         if (this.v4PowerActive) {
-            this.v4PowerDuration -= 16; // ~60fps
+            this.v4PowerDuration -= 16;
             
             if (this.v4PowerDuration <= 0) {
                 this.v4PowerActive = false;
@@ -300,9 +259,8 @@ class GameScene extends Phaser.Scene {
     performSanguineArt() {
         if (this.player.sanguineCooldown) return;
         
-        this.showDialogue('PLAYER', 'SANGUINE ART!', 1000);
+        this.showDialogue('PLAYER', '🩸 SANGUINE ART!', 1000);
         
-        // Create ghost army
         for (let i = 0; i < 12; i++) {
             const ghost = this.add.rectangle(
                 this.player.x + Phaser.Math.Between(-200, 200),
@@ -311,11 +269,12 @@ class GameScene extends Phaser.Scene {
             );
             ghost.setAlpha(0.6);
             
-            // Massive damage
             this.enemies.forEach(enemy => {
-                const dist = Phaser.Math.Distance.Between(ghost.x, ghost.y, enemy.x, enemy.y);
-                if (dist < 200) {
-                    enemy.health -= 100;
+                if (enemy && enemy.active) {
+                    const dist = Phaser.Math.Distance.Between(ghost.x, ghost.y, enemy.x, enemy.y);
+                    if (dist < 200) {
+                        enemy.health -= 100;
+                    }
                 }
             });
             
@@ -352,7 +311,6 @@ class GameScene extends Phaser.Scene {
             zombie.health = 60;
             zombie.speed = Phaser.Math.Between(100, 180);
             zombie.moveDirection = -1;
-            zombie.isEnemy = true;
             
             this.enemies.push(zombie);
         }
@@ -364,20 +322,16 @@ class GameScene extends Phaser.Scene {
         this.enemies.forEach(enemy => {
             if (!enemy.active) return;
             
-            // Movement
             enemy.body.setVelocityX(enemy.moveDirection * enemy.speed);
             
-            // Change direction at screen edges
             if (enemy.x < 50) enemy.moveDirection = 1;
             if (enemy.x > 1150) enemy.moveDirection = -1;
             
-            // Die if health <= 0
             if (enemy.health <= 0) {
                 enemy.destroy();
                 return;
             }
             
-            // Damage player on contact
             const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.x, enemy.y);
             if (dist < 60) {
                 if (!this.lastPlayerDamageTime || this.time.now - this.lastPlayerDamageTime > 500) {
@@ -386,7 +340,6 @@ class GameScene extends Phaser.Scene {
                 }
             }
             
-            // Check if player dead
             if (this.playerHealth <= 0) {
                 this.playerHealth = 0;
                 this.gameOver = true;
@@ -407,7 +360,6 @@ class GameScene extends Phaser.Scene {
         this.boss.speed = 150;
         this.boss.moveDirection = -1;
         
-        // Boss AI
         this.time.addEvent({
             delay: 2000,
             callback: () => {
@@ -429,7 +381,6 @@ class GameScene extends Phaser.Scene {
     updateBoss() {
         if (!this.boss || this.bossHealth <= 0) return;
         
-        // Damage player on contact
         const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.boss.x, this.boss.y);
         if (dist < 100) {
             if (!this.lastPlayerDamageTime || this.time.now - this.lastPlayerDamageTime > 1000) {
@@ -438,7 +389,6 @@ class GameScene extends Phaser.Scene {
             }
         }
         
-        // Boss defeated
         if (this.bossHealth <= 0) {
             this.boss.destroy();
             this.boss = null;
@@ -542,7 +492,7 @@ class GameScene extends Phaser.Scene {
                 <div style="width: 200px; height: 20px; border: 2px solid #e94560; background: rgba(0,0,0,0.5); border-radius: 10px; overflow: hidden; margin-bottom: 15px;">
                     <div id="health-bar-fill" style="height: 100%; background: linear-gradient(90deg, #ff6b6b, #ff8c8c); width: 100%; transition: width 0.2s;"></div>
                 </div>
-                <div style="margin-bottom: 5px;" id="chapter-text">Chapter 1</div>
+                <div style="margin-bottom: 5px;" id="chapter-text">Chapter 1: Ambush</div>
                 <div style="margin-bottom: 5px;" id="power-text">X: Rumble | C: V4 | F: Sanguine</div>
                 <div id="boss-health" style="display: none; margin-top: 15px;">
                     <div style="margin-bottom: 5px;">BOSS HP:</div>
@@ -556,12 +506,10 @@ class GameScene extends Phaser.Scene {
     }
 
     updateHUD() {
-        // Health bar
         const healthPercent = Math.max(0, (this.playerHealth / this.playerMaxHealth) * 100);
         const healthFill = document.getElementById('health-bar-fill');
         if (healthFill) healthFill.style.width = healthPercent + '%';
         
-        // Chapter text
         const chapterText = document.getElementById('chapter-text');
         if (chapterText) {
             const chapters = [
@@ -576,7 +524,6 @@ class GameScene extends Phaser.Scene {
             chapterText.textContent = chapters[this.currentChapter - 1] || 'Game Over';
         }
         
-        // Boss health
         if (this.boss && this.bossHealth > 0) {
             document.getElementById('boss-health').style.display = 'block';
             const bossPercent = Math.max(0, (this.bossHealth / 500) * 100);
@@ -632,7 +579,7 @@ class GameScene extends Phaser.Scene {
         
         overlay.innerHTML = `
             <h1 style="font-size: 48px; margin-bottom: 30px;">💀 Game Over 💀</h1>
-            <p style="margin-bottom: 30px;">আপনি পরাজিত হয়েছেন...</p>
+            <p style="margin-bottom: 30px; color: #fff;">আপনি পরাজিত হয়েছেন...</p>
             <button onclick="location.reload()" style="
                 padding: 15px 40px; font-size: 18px; background: #e94560;
                 border: none; color: white; border-radius: 10px;
@@ -657,7 +604,7 @@ class GameScene extends Phaser.Scene {
         
         overlay.innerHTML = `
             <h1 style="font-size: 56px; margin-bottom: 30px; animation: pulse 1s infinite;">🎊 Happy Ending! 🎊</h1>
-            <p style="font-size: 24px; margin-bottom: 20px;">আপনি এবং Nafisa বিজয়ী!</p>
+            <p style="font-size: 24px; margin-bottom: 20px; color: #fff;">আপনি এবং Nafisa বিজয়ী!</p>
             <p style="font-size: 20px; margin-bottom: 20px; color: #ff69b4;">সব অন্ধকার শেষ হয়েছে...</p>
             <p style="font-size: 20px; margin-bottom: 30px; color: #ff69b4;">একটি নতুন সুন্দর জীবন শুরু হচ্ছে 💕</p>
             <button onclick="location.reload()" style="
@@ -673,7 +620,30 @@ class GameScene extends Phaser.Scene {
     }
 }
 
-// Pulse animation
+// NOW configure Phaser game AFTER class is defined
+const config = {
+    type: Phaser.AUTO,
+    width: 1200,
+    height: 700,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 400 },
+            debug: false,
+            enableBody: true
+        }
+    },
+    scene: GameScene,
+    render: { 
+        pixelArt: true,
+        antialias: false
+    }
+};
+
+// Create the game AFTER config
+const game = new Phaser.Game(config);
+
+// Add pulse animation
 const style = document.createElement('style');
 style.textContent = `
     @keyframes pulse {
