@@ -1,0 +1,342 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0a0a1a 0%, #1a1a4d 100%);
+    font-family: 'Arial', sans-serif;
+}
+
+#game-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+canvas {
+    display: block;
+    border: 3px solid #e94560;
+    box-shadow: 0 0 30px rgba(233, 69, 96, 0.8);
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+/* Loading Screen Styles */
+#loadingScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #0a0a1a 0%, #1a1a4d 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    color: #e94560;
+}
+
+#loadingLogo {
+    font-size: 48px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 40px;
+    text-shadow: 0 0 20px rgba(233, 69, 96, 0.8);
+    animation: pulse 1.5s infinite;
+    letter-spacing: 2px;
+}
+
+#loadingBar {
+    width: 300px;
+    height: 30px;
+    border: 2px solid #e94560;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 15px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    box-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+}
+
+#loadingFill {
+    height: 100%;
+    background: linear-gradient(90deg, #e94560, #ff6b9d);
+    width: 0%;
+    transition: width 0.2s ease;
+    box-shadow: 0 0 10px rgba(233, 69, 96, 0.8);
+}
+
+#loadingText {
+    font-size: 18px;
+    color: #e94560;
+    animation: pulse 1s infinite;
+}
+
+/* HUD Styles */
+.hud {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    color: #e94560;
+    font-size: 16px;
+    z-index: 100;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border: 2px solid #e94560;
+    border-radius: 10px;
+    backdrop-filter: blur(5px);
+    min-width: 250px;
+}
+
+.hud-item {
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.health-bar {
+    width: 200px;
+    height: 20px;
+    border: 2px solid #e94560;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.health-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff6b6b, #ff8c8c);
+    width: 100%;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+}
+
+/* Dialogue Box Styles */
+.dialogue-box {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid #e94560;
+    border-radius: 10px;
+    padding: 20px;
+    max-width: 600px;
+    color: #fff;
+    font-size: 16px;
+    z-index: 100;
+    box-shadow: 0 0 20px rgba(233, 69, 96, 0.6);
+    line-height: 1.6;
+    animation: slideUp 0.3s ease;
+}
+
+.character-name {
+    color: #e94560;
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.dialogue-text {
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+/* Game Over Screen */
+.game-over-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    color: #e94560;
+    text-align: center;
+}
+
+.game-over-screen h1 {
+    font-size: 56px;
+    margin-bottom: 30px;
+    animation: pulse 1s infinite;
+}
+
+.game-over-screen p {
+    font-size: 24px;
+    margin-bottom: 30px;
+    color: #fff;
+}
+
+/* Happy Ending Screen */
+.happy-ending-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(0,0,0,0.95), rgba(233,69,96,0.3));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    color: #e94560;
+    text-align: center;
+    animation: fadeIn 0.5s ease;
+}
+
+.happy-ending-screen h1 {
+    font-size: 56px;
+    margin-bottom: 30px;
+    animation: pulse 1s infinite;
+}
+
+.happy-ending-screen p {
+    font-size: 20px;
+    margin-bottom: 20px;
+    color: #fff;
+}
+
+.happy-ending-screen .special-text {
+    color: #ff69b4;
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 30px;
+}
+
+/* Button Styles */
+button {
+    padding: 15px 40px;
+    font-size: 18px;
+    background: #e94560;
+    border: none;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    box-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+}
+
+button:hover {
+    background: #ff6b9d;
+    box-shadow: 0 0 20px rgba(233, 69, 96, 0.8);
+    transform: scale(1.05);
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+/* Animations */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateX(-50%) translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    canvas {
+        max-width: 100%;
+        max-height: 100%;
+    }
+    
+    .hud {
+        top: 10px;
+        left: 10px;
+        font-size: 12px;
+        padding: 10px;
+        min-width: 200px;
+    }
+    
+    .health-bar {
+        width: 150px;
+    }
+    
+    .dialogue-box {
+        bottom: 20px;
+        left: 10px;
+        right: 10px;
+        max-width: none;
+        padding: 15px;
+        font-size: 14px;
+        width: calc(100% - 20px);
+    }
+    
+    .game-over-screen h1,
+    .happy-ending-screen h1 {
+        font-size: 36px;
+    }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #0a0a1a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #e94560;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #ff6b9d;
+}
+
+/* Selection Styling */
+::selection {
+    background: #e94560;
+    color: #fff;
+}
+
+::-moz-selection {
+    background: #e94560;
+    color: #fff;
+}
