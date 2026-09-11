@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width,initial-scale=1.0">
+
+<title>Celestial Monarch</title>
+
+<link rel="stylesheet" href="game.css">
+
+</head>
+
+<body>
+
+<!-- ===========================
+LOADING SCREEN
+=========================== -->
+
+<div id="loadingScreen">
+
+<div id="loadingLogo">
+
+CELESTIAL
+<br>
+MONARCH
+
+</div>
+
+<div id="loadingBar">
+
+<div id="loadingFill"></div>
+
+</div>
+
+<div id="loadingText">
+
+Loading...
+
+</div>
+
+</div>
+
+
+<!-- ===========================
+MAIN MENU
+=========================== -->
+
+<div id="menu">
+
+<h1>
+
+CELESTIAL
+MONARCH
+
+</h1>
+
+<p>
+
+Anime Fantasy RPG
+
+</p>
+
+<button id="playBtn">
+
+PLAY
+
+</button>
+
+<button id="settingBtn">
+
+SETTINGS
+
+</button>
+
+<button id="aboutBtn">
+
+ABOUT
+
+</button>
+
+</div>
+
+
+<!-- ===========================
+HUD
+=========================== -->
+
+<div id="hud">
+
+<div id="hpContainer">
+
+<div id="hpBar"></div>
+
+</div>
+
+<div id="energyContainer">
+
+<div id="energyBar"></div>
+
+</div>
+
+<div id="expContainer">
+
+<div id="expBar"></div>
+
+</div>
+
+<div id="level">
+
+Lv.1
+
+</div>
+
+<div id="coins">
+
+Coins : 0
+
+</div>
+
+<div id="quest">
+
+No Quest
+
+</div>
+
+</div>
+
+
+<!-- ===========================
+SKILLS
+=========================== -->
+
+<div id="skills">
+
+<div class="skill">
+
+Z
+
+</div>
+
+<div class="skill">
+
+X
+
+</div>
+
+<div class="skill">
+
+C
+
+</div>
+
+<div class="skill">
+
+V
+
+</div>
+
+<div class="skill">
+
+F
+
+</div>
+
+</div>
+
+
+<!-- ===========================
+CROSSHAIR
+=========================== -->
+
+<div id="crosshair">
+
++
+
+</div>
+
+
+<!-- ===========================
+DIALOGUE
+=========================== -->
+
+<div id="dialogue"></div>
+
+
+<!-- ===========================
+INVENTORY
+=========================== -->
+
+<div id="inventory">
+
+<h2>
+
+Inventory
+
+</h2>
+
+<div id="inventoryGrid"></div>
+
+</div>
+
+
+<!-- ===========================
+PAUSE
+=========================== -->
+
+<div id="pauseMenu">
+
+<h1>
+
+Paused
+
+</h1>
+
+<button id="resumeBtn">
+
+Resume
+
+</button>
+
+<button id="exitBtn">
+
+Exit
+
+</button>
+
+</div>
+
+
+<!-- ===========================
+THREE.JS
+=========================== -->
+
+<script type="importmap">
+
+{
+"imports":{
+
+"three":"https://unpkg.com/three@0.170.0/build/three.module.js",
+
+"three/addons/":"https://unpkg.com/three@0.170.0/examples/jsm/"
+
+}
+}
+
+</script>
+
+<script
+type="module"
+src="game.js">
+
+</script>
+
+</body>
+</html>
