@@ -1,259 +1,1010 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="bn">
 <head>
-
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>THE CURSED VOID</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+  :root{
+    --bg:#07060a;
+    --panel:#15121cEE;
+    --border:#332b3f;
+    --text:#eee6da;
+    --text-dim:#a89bb0;
+    --hp:#e0424f;
+    --hp2:#7a1622;
+    --fruit:#3aa6d9;
+    --fruit2:#0f4a63;
+    --v4:#c48bff;
+    --v4-2:#4a2b73;
+    --ult:#e8cf7a;
+    --ult2:#5c4a12;
+    --gold:#d4af37;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Hind Siliguri','Noto Serif Bengali',serif;
+    display:flex; align-items:center; justify-content:center;
+    min-height:100vh;
+    overflow:hidden;
+    -webkit-user-select:none; user-select:none;
+  }
+  #game-wrap{
+    position:relative;
+    width:100%;
+    max-width:920px;
+    aspect-ratio:16/10;
+    max-height:96vh;
+    background:#000;
+    border-radius:10px;
+    overflow:hidden;
+    box-shadow:0 0 60px rgba(0,0,0,.7);
+  }
+  canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; }
 
-<meta name="viewport"
-content="width=device-width,initial-scale=1.0">
+  /* ---------- HUD ---------- */
+  #hud{
+    position:absolute; top:10px; left:10px; z-index:20;
+    display:flex; flex-direction:column; gap:5px;
+    width:230px;
+    font-family:'Hind Siliguri',sans-serif;
+    pointer-events:none;
+  }
+  .hud-row{ display:flex; align-items:center; gap:6px; }
+  .hud-icon{ width:20px; text-align:center; font-size:13px; filter:drop-shadow(0 1px 2px #000);}
+  .hud-track{
+    flex:1; height:13px; border-radius:7px; background:#000000b0;
+    border:1px solid var(--border); overflow:hidden; position:relative;
+  }
+  .hud-fill{ height:100%; width:0%; transition:width .18s ease; position:relative; }
+  .hud-fill.hp{ background:linear-gradient(90deg,var(--hp2),var(--hp)); }
+  .hud-fill.hp.cursed{ background:linear-gradient(90deg,#1a1a1a,#3a0d10); box-shadow:inset 0 0 8px #000;}
+  .hud-fill.fruit{ background:linear-gradient(90deg,var(--fruit2),var(--fruit)); }
+  .hud-fill.v4{ background:linear-gradient(90deg,var(--v4-2),var(--v4)); }
+  .hud-fill.v4.full{ box-shadow:0 0 10px var(--v4); }
+  .hud-fill.ult{ background:linear-gradient(90deg,var(--ult2),var(--ult)); }
+  .hud-fill.ult.full{ box-shadow:0 0 10px var(--ult); }
+  .hud-num{ font-size:10px; color:var(--text-dim); width:44px; text-align:right; }
+  #ult-row{ display:none; }
+  #ult-row.show{ display:flex; }
 
-<title>Celestial Monarch</title>
+  #chapter-tag{
+    position:absolute; top:10px; right:12px; z-index:20;
+    font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--gold); font-weight:700; text-shadow:0 1px 4px #000;
+  }
+  #restart-btn{
+    position:absolute; top:30px; right:12px; z-index:20;
+    background:none; border:1px solid var(--border); color:var(--text-dim);
+    font-size:10px; padding:4px 9px; border-radius:14px; cursor:pointer;
+    font-family:'Hind Siliguri',sans-serif;
+  }
+  #restart-btn:hover{ border-color:var(--hp); color:var(--hp);}
 
-<link rel="stylesheet" href="game.css">
+  /* ---------- hotbar ---------- */
+  #hotbar{
+    position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
+    z-index:20; display:flex; gap:8px;
+  }
+  .slot{
+    position:relative;
+    width:56px; height:56px; border-radius:10px;
+    background:linear-gradient(180deg,#221c2c,#120f18);
+    border:2px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-size:24px; cursor:pointer; color:var(--text);
+    transition:.15s;
+  }
+  .slot .key{
+    position:absolute; top:2px; left:5px; font-size:9px; color:var(--text-dim); font-weight:700;
+  }
+  .slot .cd{
+    position:absolute; inset:0; background:rgba(0,0,0,.65);
+    border-radius:8px; display:flex; align-items:center; justify-content:center;
+    font-size:11px; color:#fff; opacity:0;
+  }
+  .slot.locked{ filter:grayscale(1) brightness(.5); }
+  .slot.locked::after{
+    content:"🔒"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:18px;
+  }
+  .slot.ready{ border-color:var(--gold); box-shadow:0 0 10px rgba(212,175,55,.4);}
+  .slot.flash-lock{ animation:flashRed .35s; }
+  .slot.flash-noresource{ animation:flashBlue .35s; }
+  @keyframes flashRed{ 0%,100%{border-color:var(--border);} 50%{border-color:var(--hp); box-shadow:0 0 12px var(--hp);} }
+  @keyframes flashBlue{ 0%,100%{border-color:var(--border);} 50%{border-color:var(--fruit); box-shadow:0 0 12px var(--fruit);} }
+  .slot:hover{ transform:translateY(-3px); }
 
+  /* ---------- toast ---------- */
+  #toast{
+    position:absolute; top:60px; left:50%; transform:translateX(-50%);
+    z-index:25; font-family:'Noto Serif Bengali',serif; font-weight:700;
+    font-size:15px; color:var(--gold); text-shadow:0 2px 10px #000;
+    opacity:0; transition:opacity .3s, transform .3s; pointer-events:none;
+    background:#000000aa; padding:6px 16px; border-radius:20px; border:1px solid var(--gold);
+    white-space:nowrap;
+  }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(6px); }
+
+  /* ---------- boss bar ---------- */
+  #boss-bar-wrap{
+    position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    z-index:20; width:70%; max-width:420px; display:none; text-align:center;
+  }
+  #boss-bar-wrap.show{ display:block; }
+  #boss-name{ font-size:12px; color:var(--hp); font-weight:700; text-shadow:0 1px 3px #000; margin-bottom:2px;}
+  #boss-track{ height:14px; border-radius:7px; background:#000000b0; border:1px solid var(--border); overflow:hidden;}
+  #boss-fill{ height:100%; width:100%; background:linear-gradient(90deg,var(--hp2),var(--hp)); transition:width .18s; }
+
+  /* ---------- controls hint ---------- */
+  #controls-hint{
+    position:absolute; bottom:76px; left:50%; transform:translateX(-50%);
+    z-index:19; font-size:10.5px; color:var(--text-dim); text-align:center;
+    background:#00000099; padding:4px 10px; border-radius:8px; white-space:nowrap;
+    opacity:.85;
+  }
+
+  /* ---------- dialogue overlay ---------- */
+  #dialogue-wrap{
+    position:absolute; left:0; right:0; bottom:0; z-index:30;
+    padding:0 14px 14px 14px; display:none;
+  }
+  #dialogue-wrap.show{ display:block; }
+  #dialogue-box{
+    background:linear-gradient(180deg, var(--panel), #0d0b12EE);
+    border:1px solid var(--border); border-radius:12px;
+    padding:14px 16px 12px 16px; max-width:820px; margin:0 auto;
+    min-height:80px; display:flex; flex-direction:column; gap:8px;
+    box-shadow:0 -6px 26px rgba(0,0,0,.5);
+    backdrop-filter:blur(2px);
+  }
+  #dlg-title{ font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--v4); font-weight:700; }
+  #dlg-text{ font-family:'Noto Serif Bengali',serif; font-size:14.5px; line-height:1.65; }
+  #dlg-footer{ display:flex; justify-content:flex-end; }
+  #dlg-next{
+    font-family:'Hind Siliguri',sans-serif; font-size:12px; font-weight:700; color:var(--gold);
+    background:none; border:none; cursor:pointer; display:flex; align-items:center; gap:5px;
+  }
+  #dlg-next .arrow{ animation:nudge 1.2s infinite; }
+  @keyframes nudge{ 0%,100%{transform:translateX(0);} 50%{transform:translateX(4px);} }
+
+  /* qte / puzzle overlay reuse dialogue box zone but centered card */
+  #mid-panel{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    z-index:35; display:none; flex-direction:column; align-items:center; gap:14px;
+    background:#0d0b12EE; border:1px solid var(--border); border-radius:14px;
+    padding:22px 26px; text-align:center; max-width:80%;
+  }
+  #mid-panel.show{ display:flex; }
+  #mid-title{ font-family:'Noto Serif Bengali',serif; font-weight:700; font-size:15px; color:var(--gold); }
+  #qte-track{ width:220px; height:14px; border-radius:8px; border:1px solid var(--border); background:#000000aa; overflow:hidden;}
+  #qte-fill{ height:100%; width:0%; background:linear-gradient(90deg,var(--v4-2),var(--v4)); transition:width .1s; }
+  .mp-btn{
+    font-family:'Hind Siliguri',sans-serif; font-weight:700; font-size:14px; padding:10px 22px;
+    border-radius:8px; border:1px solid var(--gold); background:linear-gradient(180deg,#6b551b,#3e3110);
+    color:var(--text); cursor:pointer;
+  }
+  .mp-btn:active{ transform:scale(.96); }
+  #wall-row{ display:flex; gap:16px; }
+  .item-slot{ width:50px;height:50px;border-radius:9px; border:2px dashed var(--border); display:flex;align-items:center;justify-content:center; font-size:20px; background:#00000055;}
+  .item-slot.filled{ border-style:solid; border-color:var(--gold); box-shadow:0 0 10px rgba(212,175,55,.4);}
+  #pool-row{ display:flex; gap:12px; }
+  .pool-item{ width:44px;height:44px;border-radius:8px; display:flex;align-items:center;justify-content:center; font-size:20px; border:1px solid var(--gold); background:linear-gradient(180deg,#4a3b12,#241d09); cursor:pointer;}
+  .pool-item.used{ opacity:.15; pointer-events:none; }
+
+  /* ---------- start / end screens ---------- */
+  .center-screen{
+    position:absolute; inset:0; z-index:50;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; gap:18px; padding:26px;
+    background:radial-gradient(ellipse at 50% 30%, rgba(30,15,35,.5), rgba(4,3,6,.95));
+  }
+  .hidden{ display:none !important; }
+  #game-title{
+    font-family:'Noto Serif Bengali',serif; font-weight:900; font-size:clamp(22px,5vw,34px);
+    color:var(--gold); text-shadow:0 0 26px rgba(212,175,55,.3), 0 3px 16px #000; line-height:1.3;
+  }
+  #game-sub{ font-size:13px; color:var(--text-dim); max-width:440px; }
+  .big-btn{
+    font-family:'Hind Siliguri',sans-serif; font-weight:700; font-size:16px; padding:13px 30px;
+    border-radius:9px; border:1px solid var(--gold); background:linear-gradient(180deg,#6b551b,#3e3110);
+    color:var(--text); cursor:pointer;
+  }
+
+  #mobile-pad{
+    position:absolute; bottom:80px; left:12px; z-index:22; display:none;
+    grid-template-columns:repeat(3,42px); grid-template-rows:repeat(3,42px); gap:3px;
+  }
+  #mobile-pad.show{ display:grid; }
+  #mobile-pad button{
+    background:#1a1522cc; border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:16px;
+  }
+</style>
 </head>
-
 <body>
 
-<!-- ===========================
-LOADING SCREEN
-=========================== -->
+<div id="game-wrap">
+  <canvas id="arena"></canvas>
 
-<div id="loadingScreen">
+  <div id="hud">
+    <div class="hud-row">
+      <div class="hud-icon">❤️</div>
+      <div class="hud-track"><div id="hp-fill" class="hud-fill hp" style="width:100%"></div></div>
+      <div class="hud-num" id="hp-num">15900/15900</div>
+    </div>
+    <div class="hud-row">
+      <div class="hud-icon">🍈</div>
+      <div class="hud-track"><div id="fruit-fill" class="hud-fill fruit" style="width:100%"></div></div>
+      <div class="hud-num" id="fruit-num">100</div>
+    </div>
+    <div class="hud-row">
+      <div class="hud-icon">👑</div>
+      <div class="hud-track"><div id="v4-fill" class="hud-fill v4" style="width:0%"></div></div>
+      <div class="hud-num" id="v4-num">0</div>
+    </div>
+    <div class="hud-row" id="ult-row">
+      <div class="hud-icon">🩸</div>
+      <div class="hud-track"><div id="ult-fill" class="hud-fill ult" style="width:0%"></div></div>
+      <div class="hud-num" id="ult-num">0</div>
+    </div>
+  </div>
 
-<div id="loadingLogo">
+  <div id="chapter-tag">অধ্যায় ১ / ৭</div>
+  <button id="restart-btn" onclick="restartGame()">⟲ RE SUMMON AND ENJOY</button>
+  <div id="toast"></div>
+  <div id="controls-hint">চলাফেরা: WASD / তীরচিহ্ন &nbsp;|&nbsp; আক্রমণ: Space / ক্লিক &nbsp;|&nbsp; হটবার: 1 2 3 4</div>
 
-CELESTIAL
-<br>
-MONARCH
+  <div id="boss-bar-wrap">
+    <div id="boss-name">মূল বস</div>
+    <div id="boss-track"><div id="boss-fill"></div></div>
+  </div>
 
+  <div id="hotbar">
+    <div class="slot" id="slot-1" onclick="abilitySword()"><span class="key">1</span>🗡️<div class="cd" id="cd-1"></div></div>
+    <div class="slot locked" id="slot-2" onclick="abilityRumble()"><span class="key">2</span>⚡<div class="cd" id="cd-2"></div></div>
+    <div class="slot locked" id="slot-3" onclick="abilityV4()"><span class="key">3</span>👑<div class="cd" id="cd-3"></div></div>
+    <div class="slot locked" id="slot-4" onclick="abilitySanguine()"><span class="key">4</span>🩸<div class="cd" id="cd-4"></div></div>
+  </div>
+
+  <div id="mobile-pad">
+    <div></div><button ontouchstart="mkeys.up=true" ontouchend="mkeys.up=false">▲</button><div></div>
+    <button ontouchstart="mkeys.left=true" ontouchend="mkeys.left=false">◀</button>
+    <button ontouchstart="mkeys.down=true" ontouchend="mkeys.down=false">▼</button>
+    <button ontouchstart="mkeys.right=true" ontouchend="mkeys.right=false">▶</button>
+    <div></div><div></div><div></div>
+  </div>
+
+  <!-- dialogue -->
+  <div id="dialogue-wrap">
+    <div id="dialogue-box">
+      <div id="dlg-title">কথকতা</div>
+      <div id="dlg-text"></div>
+      <div id="dlg-footer"><button id="dlg-next">পরবর্তী <span class="arrow">▶</span></button></div>
+    </div>
+  </div>
+
+  <!-- qte / puzzle mid panel -->
+  <div id="mid-panel">
+    <div id="mid-title"></div>
+    <div id="mid-body"></div>
+  </div>
+
+  <!-- title -->
+  <div id="title-screen" class="center-screen">
+    <div style="font-size:36px;">🗡️</div>
+    <div id="game-title">THE CURSED VOID STORY</div>
+    <div id="game-sub">PLAY RPG WITH WASD AND MOUSE/SPACE.ENJOY 2D GAME</div>
+    <button class="big-btn" onclick="startGame()">START THE GAME</button>
+  </div>
+
+  <!-- end -->
+  <div id="end-screen" class="center-screen hidden">
+    <div style="font-size:36px;">💍</div>
+    <div id="game-title">খেলা সমাপ্ত</div>
+    <div id="game-sub">সমস্ত যুদ্ধ, রক্ত আর অভিশাপ পেরিয়ে আপনি ও উইচ একসাথে নতুন এক ভোরের মুখোমুখি। বিবাহ বন্ধনে আবদ্ধ হলো আপনাদের ভালোবাসা।</div>
+    <button class="big-btn" onclick="restartGame()">আবার খেলুন</button>
+  </div>
 </div>
-
-<div id="loadingBar">
-
-<div id="loadingFill"></div>
-
-</div>
-
-<div id="loadingText">
-
-Loading...
-
-</div>
-
-</div>
-
-
-<!-- ===========================
-MAIN MENU
-=========================== -->
-
-<div id="menu">
-
-<h1>
-
-CELESTIAL
-MONARCH
-
-</h1>
-
-<p>
-
-Anime Fantasy RPG
-
-</p>
-
-<button id="playBtn">
-
-PLAY
-
-</button>
-
-<button id="settingBtn">
-
-SETTINGS
-
-</button>
-
-<button id="aboutBtn">
-
-ABOUT
-
-</button>
-
-</div>
-
-
-<!-- ===========================
-HUD
-=========================== -->
-
-<div id="hud">
-
-<div id="hpContainer">
-
-<div id="hpBar"></div>
-
-</div>
-
-<div id="energyContainer">
-
-<div id="energyBar"></div>
-
-</div>
-
-<div id="expContainer">
-
-<div id="expBar"></div>
-
-</div>
-
-<div id="level">
-
-Lv.1
-
-</div>
-
-<div id="coins">
-
-Coins : 0
-
-</div>
-
-<div id="quest">
-
-No Quest
-
-</div>
-
-</div>
-
-
-<!-- ===========================
-SKILLS
-=========================== -->
-
-<div id="skills">
-
-<div class="skill">
-
-Z
-
-</div>
-
-<div class="skill">
-
-X
-
-</div>
-
-<div class="skill">
-
-C
-
-</div>
-
-<div class="skill">
-
-V
-
-</div>
-
-<div class="skill">
-
-F
-
-</div>
-
-</div>
-
-
-<!-- ===========================
-CROSSHAIR
-=========================== -->
-
-<div id="crosshair">
-
-+
-
-</div>
-
-
-<!-- ===========================
-DIALOGUE
-=========================== -->
-
-<div id="dialogue"></div>
-
-
-<!-- ===========================
-INVENTORY
-=========================== -->
-
-<div id="inventory">
-
-<h2>
-
-Inventory
-
-</h2>
-
-<div id="inventoryGrid"></div>
-
-</div>
-
-
-<!-- ===========================
-PAUSE
-=========================== -->
-
-<div id="pauseMenu">
-
-<h1>
-
-Paused
-
-</h1>
-
-<button id="resumeBtn">
-
-Resume
-
-</button>
-
-<button id="exitBtn">
-
-Exit
-
-</button>
-
-</div>
-
-
-<!-- ===========================
-THREE.JS
-=========================== -->
-
-<script type="importmap">
-
-{
-"imports":{
-
-"three":"https://unpkg.com/three@0.170.0/build/three.module.js",
-
-"three/addons/":"https://unpkg.com/three@0.170.0/examples/jsm/"
-
+<script>
+/* ============================================================
+   WORLD / GAME STATE
+   ============================================================ */
+const canvas = document.getElementById('arena');
+const ctx = canvas.getContext('2d');
+let W=800,H=500;
+function resizeCanvas(){
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width; canvas.height = rect.height;
+  W=canvas.width; H=canvas.height;
 }
+window.addEventListener('resize', resizeCanvas);
+
+const themes = {
+  forest:{a:'#16241a',b:'#0a130d',accent:'#4f9a5e'},
+  prison:{a:'#1a1424',b:'#0a0710',accent:'#8b6cff'},
+  ocean:{a:'#0d2531',b:'#061218',accent:'#4fb3d9'},
+  battle:{a:'#2a0d12',b:'#0d0406',accent:'#e0424f'},
+  boss:{a:'#33060c',b:'#0a0202',accent:'#ff5a63'},
+  victory:{a:'#2b2308',b:'#100c02',accent:'#e8cf7a'}
+};
+let currentTheme = themes.forest;
+
+const G = {
+  mode:'cutscene', // cutscene | arena | qte | puzzle | fprompt | ended
+  running:false,
+  player:{
+    x:400,y:250,r:17,hp:15900,maxHp:15900,fruit:1600,maxFruit:1600,
+    v4:0,maxV4:100,ult:0,maxUlt:100,
+    speed:215, facing:0, atkCD:0, rumbleCD:0,
+    v4Active:false, v4Timer:0, invuln:0, cursed:false
+  },
+  enemies:[],
+  effects:[],   // slashes/beams/bursts
+  popups:[],    // floating damage text
+  keys:{},
+  mouse:{x:400,y:250,down:false},
+  unlocked:{rumble:false, v4:false, sanguine:false},
+  waveQueue:[],
+  waveGap:0,
+  bossMode:false,
+  onArenaComplete:null
+};
+const mkeys = {up:false,down:false,left:false,right:false};
+
+/* ============================================================
+   INPUT
+   ============================================================ */
+window.addEventListener('keydown', e=>{
+  G.keys[e.code]=true;
+  if(['Space','Digit1','Digit2','Digit3','Digit4','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+  if(e.repeat) return;
+  if(e.code==='Space' || e.code==='Digit1') abilitySword();
+  if(e.code==='Digit2') abilityRumble();
+  if(e.code==='Digit3') abilityV4();
+  if(e.code==='Digit4') abilitySanguine();
+});
+window.addEventListener('keyup', e=>{ G.keys[e.code]=false; });
+canvas.addEventListener('mousemove', e=>{
+  const r = canvas.getBoundingClientRect();
+  G.mouse.x = e.clientX-r.left; G.mouse.y = e.clientY-r.top;
+});
+canvas.addEventListener('mousedown', e=>{ abilitySword(); });
+canvas.addEventListener('touchstart', e=>{
+  const r = canvas.getBoundingClientRect();
+  const t = e.touches[0];
+  G.mouse.x = t.clientX-r.left; G.mouse.y = t.clientY-r.top;
+  abilitySword();
+},{passive:true});
+if('ontouchstart' in window){ document.getElementById('mobile-pad').classList.add('show'); }
+
+/* ============================================================
+   ABILITIES
+   ============================================================ */
+function flashSlot(n, cls){
+  const el = document.getElementById('slot-'+n);
+  el.classList.remove('flash-lock','flash-noresource');
+  void el.offsetWidth;
+  el.classList.add(cls);
+  setTimeout(()=>el.classList.remove(cls), 350);
+}
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+function spawnPopup(x,y,text,color){
+  G.popups.push({x,y,text,color:color||'#fff',life:0.9,maxLife:0.9});
+}
+function spawnEffect(obj){ G.effects.push(obj); }
+
+function abilitySword(){
+  if(G.mode==='ended') return;
+  const p = G.player;
+  if(p.atkCD>0) return;
+  p.atkCD = 0.32;
+  p.facing = Math.atan2(G.mouse.y-p.y, G.mouse.x-p.x);
+  spawnEffect({type:'slash', x:p.x,y:p.y, ang:p.facing, life:0.18, maxLife:0.18});
+  let hitAny=false;
+  G.enemies.forEach(en=>{
+    const dx=en.x-p.x, dy=en.y-p.y;
+    const dist=Math.hypot(dx,dy);
+    if(dist < 92+en.r){
+      const ang = Math.atan2(dy,dx);
+      let diff = Math.abs(ang - p.facing);
+      if(diff>Math.PI) diff = 2*Math.PI-diff;
+      if(diff < 1.0){
+        const dmg = Math.round((p.v4Active?2147:2426) + Math.random()*8);
+        damageEnemy(en, dmg);
+        hitAny=true;
+      }
+    }
+  });
+  if(hitAny){ gainGauge(6,3); }
+}
+function abilityRumble(){
+  if(G.mode==='ended') return;
+  if(!G.unlocked.rumble){ flashSlot(2,'flash-lock'); toast('এখনো আনলক হয়নি'); return; }
+  const p = G.player;
+  if(p.rumbleCD>0) return;
+  if(p.fruit < 47){ flashSlot(2,'flash-noresource'); toast('ফ্রুট এনার্জি কম!'); return; }
+  p.fruit -= 30; p.rumbleCD = 1.0;
+  p.facing = Math.atan2(G.mouse.y-p.y, G.mouse.x-p.x);
+  spawnEffect({type:'beam', x:p.x,y:p.y, ang:p.facing, life:0.28, maxLife:0.28});
+  let hitAny=false;
+  G.enemies.forEach(en=>{
+    const dx=en.x-p.x, dy=en.y-p.y;
+    const dist=Math.hypot(dx,dy);
+    if(dist < 270){
+      const ang = Math.atan2(dy,dx);
+      let diff = Math.abs(ang - p.facing);
+      if(diff>Math.PI) diff = 2*Math.PI-diff;
+      if(diff < 0.32){
+        const dmg = Math.round((p.v4Active?3294:3302) + Math.random()*10);
+        damageEnemy(en, dmg);
+        hitAny=true;
+      }
+    }
+  });
+  if(hitAny) gainGauge(4,5);
+}
+function abilityV4(){
+  if(G.mode==='ended') return;
+  if(!G.unlocked.v4){ flashSlot(3,'flash-lock'); toast('এখনো আনলক হয়নি'); return; }
+  const p = G.player;
+  if(p.v4Active) return;
+  if(p.v4 < p.maxV4){ flashSlot(3,'flash-noresource'); toast('V4 POWER পূর্ণ নয়!'); return; }
+  p.v4 = 0; p.v4Active = true; p.v4Timer = 17;
+  p.speed = 300;
+  spawnEffect({type:'burst', x:p.x,y:p.y, color:'#c48bff', life:0.5, maxLife:0.5, r:10});
+  toast('⚡ V4 transformed!');
+}
+function abilitySanguine(){
+  if(G.mode==='ended') return;
+  if(!G.unlocked.sanguine){ flashSlot(4,'flash-lock'); toast('এখনো আনলক হয়নি'); return; }
+  const p = G.player;
+  if(p.ult < p.maxUlt-48){ flashSlot(4,'flash-noresource'); toast('স্যানগুইন আর্ট POWER পূর্ণ নয়!'); return; }
+  p.ult = 0;
+  spawnEffect({type:'burst', x:p.x,y:p.y, color:'#e8cf7a', life:5.7, maxLife:4.7, r:16});
+  G.enemies.forEach(en=>{ damageEnemy(en, 165); spawnEffect({type:'burst', x:en.x,y:en.y,color:'#ff5a63', life:0.4,maxLife:0.4,r:6}); });
+  if(!p.cursed){ p.hp = Math.min(p.maxHp, p.hp+6870); }
+  toast('🩸 স্যানগুইন আর্ট!');
+}
+function gainGauge(v4amt, ultAmt){
+  const p = G.player;
+  if(G.unlocked.v4) p.v4 = Math.min(p.maxV4, p.v4+v4amt);
+  if(G.unlocked.sanguine) p.ult = Math.min(p.maxUlt, p.ult+ultAmt);
+}
+function damageEnemy(en, dmg){
+  en.hp -= dmg;
+  en.flash = 0.15;
+  spawnPopup(en.x, en.y-en.r-6, '-'+dmg, '#ffdede');
+  if(en.hp<=1 && !en.dead){
+    en.dead = true;
+    spawnEffect({type:'burst', x:en.x,y:en.y,color:currentTheme.accent, life:0.35,maxLife:0.35,r:8});
+  }
 }
 
+/* ============================================================
+   ENEMY TEMPLATES / ARENA
+   ============================================================ */
+const templates = {
+  zombie:{name:'জম্বি', icon:'🧟', hp:2678, dmg:216, speed:75, r:16, atkRange:34},
+  goon:{name:'ঘাতক', icon:'👺', hp:3960, dmg:394, speed:92, r:17, atkRange:34},
+  chela:{name:'অতর্কিত চেলা', icon:'😈', hp:5275, dmg:1510, speed:88, r:18, atkRange:36},
+  boss:{name:'মূল বস', icon:'👹', hp:124430, dmg:2413, speed:92, r:27, atkRange:44},
+  finalGoon:{name:'চেলার ছোট ভাই', icon:'💀', hp:455, dmg:451, speed:96, r:17, atkRange:34}
+};
+function spawnEnemy(tpl){
+  const edge = Math.floor(Math.random()*4);
+  let x,y;
+  if(edge===0){x=Math.random()*W; y=-30;}
+  else if(edge===1){x=Math.random()*W; y=H+30;}
+  else if(edge===2){x=-30; y=Math.random()*H;}
+  else {x=W+30; y=Math.random()*H;}
+  G.enemies.push(Object.assign({x,y,hp:tpl.hp,maxHp:tpl.hp,flash:0,atkCD:Math.random()*0.6,dead:false}, tpl));
+}
+function startArena(waves, onComplete, bossMode){
+  G.mode='arena';
+  G.enemies = [];
+  G.waveQueue = waves.map(w=>w.slice());
+  G.waveGap = 0.2;
+  G.bossMode = !!bossMode;
+  document.getElementById('boss-bar-wrap').classList.toggle('show', G.bossMode);
+  G.onArenaComplete = onComplete;
+  document.getElementById('dialogue-wrap').classList.remove('show');
+}
+function completeArena(){
+  G.mode='cutscene';
+  document.getElementById('boss-bar-wrap').classList.remove('show');
+  toast('CLEARED🏆');
+  const cb = G.onArenaComplete; G.onArenaComplete=null;
+  setTimeout(()=>{ if(cb) cb(); }, 700);
+}
+
+/* ============================================================
+   UPDATE LOOP
+   ============================================================ */
+let lastT = performance.now();
+function loop(now){
+  const dt = Math.min(0.05, (now-lastT)/1000);
+  lastT = now;
+  update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+function update(dt){
+  const p = G.player;
+  // movement always allowed (idle world feel)
+  let dx=0,dy=0;
+  if(G.keys['KeyW']||G.keys['ArrowUp']||mkeys.up) dy-=1;
+  if(G.keys['KeyS']||G.keys['ArrowDown']||mkeys.down) dy+=1;
+  if(G.keys['KeyA']||G.keys['ArrowLeft']||mkeys.left) dx-=1;
+  if(G.keys['KeyD']||G.keys['ArrowRight']||mkeys.right) dx+=1;
+  if(dx||dy){
+    const len=Math.hypot(dx,dy); dx/=len; dy/=len;
+    p.x += dx*p.speed*dt; p.y += dy*p.speed*dt;
+    if(G.mouse.x===p._lastMouseX) p.facing = Math.atan2(dy,dx);
+  }
+  p.x = Math.max(p.r, Math.min(W-p.r, p.x));
+  p.y = Math.max(p.r, Math.min(H-p.r, p.y));
+  p.facing = Math.atan2(G.mouse.y-p.y, G.mouse.x-p.x);
+
+  if(p.atkCD>0) p.atkCD-=dt;
+  if(p.rumbleCD>0) p.rumbleCD-=dt;
+  if(p.invuln>0) p.invuln-=dt;
+  p.fruit = Math.min(p.maxFruit, p.fruit + dt*9);
+  if(p.v4Active){
+    p.v4Timer -= dt;
+    if(p.v4Timer<=0){ p.v4Active=false; p.speed=210; }
+  }
+
+  if(G.mode==='arena'){
+    if(G.enemies.length===0){
+      if(G.waveQueue.length>0){
+        if(G.waveGap>0){ G.waveGap-=dt; }
+        else {
+          const wave = G.waveQueue.shift();
+          wave.forEach(key=> spawnEnemy(templates[key]));
+          G.waveGap = 1.0;
+          if(G.waveQueue.length>0) toast('NEXT ISLAND after u kill them...');
+        }
+      } else {
+        completeArena();
+      }
+    }
+    G.enemies.forEach(en=>{
+      if(en.flash>0) en.flash-=dt;
+      const ddx = p.x-en.x, ddy=p.y-en.y;
+      const dist = Math.hypot(ddx,ddy);
+      if(dist > en.atkRange){
+        en.x += (ddx/dist)*en.speed*dt;
+        en.y += (ddy/dist)*en.speed*dt;
+      } else if(en.atkCD<=0 && p.invuln<=0){
+        p.hp = Math.max(1, p.hp - en.dmg);
+        p.invuln = 0.5;
+        gainGauge(5,1);
+        spawnPopup(p.x,p.y-p.r-6,'-'+en.dmg,'#ff8a8a');
+        en.atkCD = 0.9;
+      }
+      if(en.atkCD>0) en.atkCD-=dt;
+    });
+    G.enemies = G.enemies.filter(en=> !(en.dead && en.flash<=-0.3) );
+    G.enemies.forEach(en=>{ if(en.dead) en.flash-=dt; });
+    G.enemies = G.enemies.filter(en=> en.hp>0 || (en.dead && en.flash>-0.3));
+    G.enemies = G.enemies.filter(en=> en.hp>0);
+
+    if(G.bossMode){
+      const boss = G.enemies.find(e=>e.name && e.icon==='👹');
+      const bw = document.getElementById('boss-fill');
+      if(boss){ bw.style.width = Math.max(0,(boss.hp/boss.maxHp*141412))+'%'; }
+    }
+  }
+
+  // effects
+  G.effects.forEach(fx=> fx.life-=dt);
+  G.effects = G.effects.filter(fx=>fx.life>0);
+  G.popups.forEach(pp=>{ pp.life-=dt; pp.y-=26*dt; });
+  G.popups = G.popups.filter(pp=>pp.life>0);
+
+  updateHUD();
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render(){
+  ctx.clearRect(0,0,W,H);
+  const grad = ctx.createRadialGradient(W/2,H*0.35,20,W/2,H*0.4,Math.max(W,H)*0.8);
+  grad.addColorStop(0,currentTheme.a);
+  grad.addColorStop(1,currentTheme.b);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,W,H);
+
+  // ground dots
+  ctx.globalAlpha=0.18;
+  ctx.fillStyle = currentTheme.accent;
+  for(let i=0;i<26;i++){
+    const gx = (i*97 % W), gy = (i*53 % H);
+    ctx.beginPath(); ctx.arc(gx,gy,1.6,0,7); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+
+  // enemies
+  G.enemies.forEach(en=>{
+    ctx.save();
+    ctx.globalAlpha = en.dead ? Math.max(0,1+en.flash/0.35) : 1;
+    // body
+    ctx.beginPath();
+    ctx.arc(en.x,en.y,en.r,0,7);
+    ctx.fillStyle = en.flash>0 ? '#ffffff' : '#241922';
+    ctx.fill();
+    ctx.lineWidth=2; ctx.strokeStyle = '#000a'; ctx.stroke();
+    ctx.font = (en.r*1.5)+'px sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(en.icon, en.x, en.y+1);
+    // hp bar
+    const bw = en.r*2.2;
+    ctx.fillStyle = '#000000aa';
+    ctx.fillRect(en.x-bw/2, en.y-en.r-12, bw, 5);
+    ctx.fillStyle = '#e0424f';
+    ctx.fillRect(en.x-bw/2, en.y-en.r-12, bw*Math.max(0,en.hp/en.maxHp), 5);
+    ctx.restore();
+  });
+
+  // player
+  const p = G.player;
+  ctx.save();
+  if(p.v4Active){
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r+8+Math.sin(performance.now()/80)*2,0,7);
+    ctx.strokeStyle='rgba(196,139,255,.8)'; ctx.lineWidth=3; ctx.stroke();
+  }
+  if(p.invuln>0 && Math.floor(performance.now()/60)%2===0){ ctx.globalAlpha=0.5; }
+  ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7);
+  ctx.fillStyle = p.v4Active ? '#e6d3ff' : '#eee6da';
+  ctx.fill();
+  ctx.lineWidth=2.5; ctx.strokeStyle = p.v4Active ? '#c48bff' : '#d4af37'; ctx.stroke();
+  // facing wedge (sword)
+  ctx.strokeStyle = '#fff'; ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.moveTo(p.x,p.y);
+  ctx.lineTo(p.x+Math.cos(p.facing)*(p.r+16), p.y+Math.sin(p.facing)*(p.r+16));
+  ctx.stroke();
+  ctx.restore();
+  // effects
+  G.effects.forEach(fx=>{
+    const t = fx.life/fx.maxLife;
+    if(fx.type==='slash'){
+      ctx.save();
+      ctx.globalAlpha = t;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(fx.x, fx.y, 70, fx.ang-0.9, fx.ang+0.9);
+      ctx.stroke();
+      ctx.restore();
+    } else if(fx.type==='beam'){
+      ctx.save();
+      ctx.globalAlpha = t;
+      ctx.strokeStyle = '#8ecbff';
+      ctx.lineWidth = 6;
+      ctx.shadowColor='#4fb3d9'; ctx.shadowBlur=14;
+      ctx.beginPath();
+      ctx.moveTo(fx.x,fx.y);
+      ctx.lineTo(fx.x+Math.cos(fx.ang)*260, fx.y+Math.sin(fx.ang)*260);
+      ctx.stroke();
+      ctx.restore();
+    } else if(fx.type==='burst'){
+      ctx.save();
+      ctx.globalAlpha = t;
+      ctx.fillStyle = fx.color;
+      ctx.shadowColor = fx.color; ctx.shadowBlur=20;
+      ctx.beginPath();
+      ctx.arc(fx.x, fx.y, fx.r + (1-t)*40, 0, 7);
+      ctx.fill();
+      ctx.restore();
+    }
+  });
+
+  // popups
+  G.popups.forEach(pp=>{
+    ctx.save();
+    ctx.globalAlpha = Math.max(0,pp.life/pp.maxLife);
+    ctx.fillStyle = pp.color;
+    ctx.font = 'bold 13px Hind Siliguri, sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText(pp.text, pp.x, pp.y);
+    ctx.restore();
+  });
+}
+
+/* ============================================================
+   HUD SYNC
+   ============================================================ */
+function updateHUD(){
+  const p = G.player;
+  const hpFill = document.getElementById('hp-fill');
+  hpFill.style.width = Math.max(0,(p.hp/p.maxHp*15900))+'%';
+  hpFill.classList.toggle('cursed', p.cursed);
+  document.getElementById('hp-num').textContent = Math.ceil(p.hp)+'/'+p.maxHp;
+
+  document.getElementById('fruit-fill').style.width = (p.fruit/p.maxFruit*1600)+'%';
+  document.getElementById('fruit-num').textContent = Math.floor(p.fruit);
+
+  const v4f = document.getElementById('v4-fill');
+  v4f.style.width = (p.v4/p.maxV4*100)+'%';
+  v4f.classList.toggle('full', p.v4>=p.maxV4 && G.unlocked.v4);
+  document.getElementById('v4-num').textContent = Math.floor(p.v4);
+
+  const ultf = document.getElementById('ult-fill');
+  ultf.style.width = (p.ult/p.maxUlt*100)+'%';
+  ultf.classList.toggle('full', p.ult>=p.maxUlt && G.unlocked.sanguine);
+  document.getElementById('ult-num').textContent = Math.floor(p.ult);
+
+  document.getElementById('slot-2').classList.toggle('locked', !G.unlocked.rumble);
+  document.getElementById('slot-3').classList.toggle('locked', !G.unlocked.v4);
+  document.getElementById('slot-3').classList.toggle('ready', G.unlocked.v4 && p.v4>=p.maxV4);
+  document.getElementById('slot-4').classList.toggle('locked', !G.unlocked.sanguine);
+  document.getElementById('slot-4').classList.toggle('ready', G.unlocked.sanguine && p.ult>=p.maxUlt);
+  document.getElementById('ult-row').classList.toggle('show', G.unlocked.sanguine);
+}
+
+/* ============================================================
+   STORY / CUTSCENE ENGINE
+   ============================================================ */
+const chapters = [
+{ n:1, title:"অধ্যায় ১: ছদ্মবেশ, গিলে ফেলা ও অন্ধকারের সূচনা", bg:'forest',
+  lines:[
+   "গল্পের শুরু হয় এক ঘন জঙ্গলে। আপনি আপনার বিশ্বস্ত স্কোয়াডের সৈনিকদের সাথে একটি ট্র্যাভেল বাসে মিশনে বের হয়েছেন। হঠাৎ মাঝপথে এক লোক হাত নেড়ে গাড়ি থামায় এবং কান্নাকাটি করে জানায় গভীর জঙ্গলে তার গাড়িটা নষ্ট হয়ে পড়ে আছে।",
+   "গাড়িটার কাছে পৌঁছানো মাত্রই বুঝতে পারেন এটা একটা ভয়ংকর ট্র্যাপ! মাটি ফেটে সুড়ঙ্গ থেকে স্পন করে মেইন বসের অধীনস্থ এক হিংস্র 'চেলা'। সে অতর্কিত আক্রমণ চালিয়ে আপনাকে মাটিতে আছাড় মারে; আপনার চোখের প্রায় ৭০% দৃষ্টিশক্তি নষ্ট হয়ে যায়।",
+   "সেই ঝাপসা চোখে আপনি দেখেন—চেলা আপনার প্রধান ফরেস্ট সোলজারকে জীবন্ত গিলে ফেলে! বাকি সোলজারদের হত্যা করা হয়। ভাগ্যক্রমে আপনার বেস্ট ফ্রেন্ড বেঁচে যায়। শত্রুরা আপনাদের দুজনকে বন্দি করে এক অন্ধকার কারাগারে নিয়ে যায়।"
+  ]},
+{ n:2, title:"অধ্যায় ২: অন্ধকারের জেলখানা ও উইচের সাথে সাক্ষাৎ", bg:'prison',
+  lines:[
+   "অন্ধকার কারাকক্ষে আপনি এবং আপনার বেস্ট ফ্রেন্ড লোহার শিকলে আবদ্ধ থাকেন। সেই জেলখানায় বন্দি ছিল এক অপূর্ব সুন্দরী জাদুকরী বা 'উইচ' (Nafisa)। আপনাকে দেখা মাত্রই উইচ আপনার ওপর ক্রাশ খেয়ে বসে। কিন্তু জেলখানায় কালাযাদুকরের মন্ত্রে ম্যাজিক লক করা ছিল, কোনো পাওয়ার কাজ করছিল না।"
+  ],
+  qte:{ label:'শিকল ভাঙুন', instruction:'গায়ের শক্তি দিয়ে শিকল ভাঙতে দ্রুত ক্লিক করুন!', required:16 },
+  linesAfter:[
+   "আপনি নিজের গায়ের শক্তি দিয়ে লড়াই করে উইচের শিকল ভেঙে দেন। শৃঙ্খলমুক্ত হয়ে আপনারা জাদুটোনার গণ্ডি ও জেলখানার সীমানা পার হয়ে বাইরের স্বাধীন বাতাসে পা রাখেন।"
+  ]},
+{ n:3, title:"অধ্যায় ৩: সাগরের বুকে যাত্রা ও অলৌকিক 'RUMBLE FRUIT'", bg:'ocean',
+  lines:[
+   "জেলখানা থেকে পালিয়ে উইচ আপনাকে সমুদ্রের তীরে এক জাদুকরী নৌকার কাছে নিয়ে যায়। শত্রু দ্বীপে যাওয়ার পথে উইচ আপনাকে একটি বিষ্ময়কর 'রুম্বল ফ্রুট' দেয়। ফ্রুটটি খাওয়ার সাথে সাথেই আপনার শরীরে বিদ্যুৎ ও বিজলির অলৌকিক শক্তি চলে আসে!",
+   "উইচ আপনাকে ডোমেইন ব্যবহারের কৌশল শেখায় এবং জানায় তারা দুজনে একে অপরের সেরা বন্ধু হিসেবে লড়াই করবে।"
+  ], unlock:'rumble', unlockMsg:'⚡ রুম্বল ফ্রুট আনলক! হটবারে "2" চাপুন'},
+{ n:4, title:"অধ্যায় ৪: জম্বি যুদ্ধ, V4 Power ও স্যানগুইন আর্টের তাণ্ডব", bg:'battle',
+  lines:[
+   "শত্রু দ্বীপে পা রাখতেই মাটির নিচে থেকে শত শত জম্বি ও ঘাতক স্পন করে। আপনি কুড়িয়ে পাওয়া তলোয়ার দিয়ে লড়াই শুরু করেন।"
+  ],
+  arenaWaves:[['zombie','zombie','zombie','zombie'],['zombie','zombie','zombie','goon']],
+  midLines:[
+   "লড়াইয়ের মাঝে হঠাৎ পেছন থেকে এক ঘাতক আপনাকে মারাত্মকভাবে আঘাত করে মাটিতে ফেলে দেয়। ঠিক সেই সংকট মুহূর্তে উইচ আপনার পাশে এসে নিজের জাদুকরী পাওয়ার দিয়ে আপনাকে V4 Power অর্পণ করে!"
+  ],
+  
+  fPrompt:true,
+  linesAfter:[
+   "নতুন শক্তি পাওয়ার পরও রক্তক্ষয়ী লড়াইয়ে একপর্যায়ে আঘাত পেয়ে আপনি মাটিতে পড়ে যান। চোখের সামনে একটা চিঠি ভেসে ওঠে। রক্তমাখা হাতে স্ক্রিনে 'F' প্রেস করতেই ডেকে আনেন এক প্রেতাত্মা—আপনার ওপর ভর করে 'স্যানগুইন আর্ট'!"
+  ],
+  unlock2:'sanguine', unlockMsg2:'🩸 স্যানগুইন আর্ট আনলক! BAR পূর্ণ হলে "4" চাপুন'},
+{ n:5, title:"অধ্যায় ৫: দ্বিতীয় দ্বীপ ও রোমান্টিক অঙ্গীকার", bg:'ocean',
+  lines:[
+   "প্রথম দ্বীপের জম্বিদের নিশ্চিহ্ন করে আপনি ও উইচ দ্বিতীয় দ্বীপে পৌঁছান। দুটি মিনি-বসকে পরাজিত করে আপনি পিলারের মতো দুটি বিশেষ Cursed Item সংগ্রহ করেন।",
+   "সামনে এক পাথরের দেওয়ালে দুটি ফাঁকা জায়গা দেখা যায়। উইচ সতর্ক করে বলে—\"সাবধানে ওই পিলার দুটি দেওয়ালে বসাও, তাহলেই মূল বস সামনে হবে। আমরা তো জন্মই হইছি একে অপরকে নিজের বানাইতে 🌹 (কিন্তু আমরা তো জিতবোই, হারবো কেমনে!)\""
+  ],
+  puzzle:true,
+  linesAfter:[
+   "উইচের এই মিষ্টি ডায়ালগ ও রোমান্টিক মুহূর্ত শেষে আপনি আইটেম দুটি দেওয়ালে বসাতেই খুলে যায় গোপন ঘরের দরজা!"
+  ]},
+{ n:6, title:"অধ্যায় ৬: বসের আসল পরিচয়, অভিশপ্ত তলোয়ার ও ট্র্যাজেডি", bg:'boss',
+  lines:[
+   "গোপন ঘরে প্রবেশ করেই মুখোমুখি হন মূল বসের। রুম্বল ফ্রুটের বিজলি আর স্যানগুইন আর্ট ব্যবহার করে রক্তক্ষয়ী মহাযুদ্ধে আপনি আর উইচ মিলে বসকে পরাস্ত করার জন্য ঝাঁপিয়ে পড়েন।"
+  ],
+  bossWaves:[['boss']],
+  linesAfter:[
+   "বস মাটিতে লুটিয়ে পড়ার পর তার পেট থেকে অলৌকিকভাবে অক্ষত অবস্থায় বেরিয়ে আসে আপনার হারিয়ে যাওয়া বেস্ট ফ্রেন্ড! বস প্রকাশ করে—সে-ই সেই ফরেস্ট সোলজার, যাকে শুরুতে চেলা গিলে ফেলেছিল! চেলার পেটে লুকিয়ে থেকে সে-ই ছিল এই নাটকের মূল কারিগর।",
+   "মৃত্যুর মুখে দাঁড়িয়ে সে শেষ অভিশাপ দিয়ে বলে—\"তোকেও যেন এই Cursed Katana দিয়ে মারা হয়! এই তলোয়ারের ক্ষত কোনো হিলিং বা যাদু দিয়ে সারানো যায় না... যতক্ষণ না সোর্ডের মালিক নিজে মারা যায়!\"",
+   "কথা শেষ হতেই অতর্কিত চেলা পেছন থেকে এসে উইচের পেটে অস্ত্র ঢুকিয়ে দেয় ও উপহাস করে \"Ez noob!\" বলে। উইচ যন্ত্রণায় অচৈতন্য হয়ে পড়ে যায়। অভিশাপের কারণে তাকে হিল করা যাচ্ছিল না—বাঁচাতে হলে ক্যাটানার মালিককে মারতেই হতো!"
+  ],
+  arenaWaves2:[['chela']],
+  linesAfter2Curse:[
+   "আপনি প্রাণপণ লড়াই করে সেই চেলাকে হত্যা করে \"Ez\" বলে প্রতিশোধ নেন! কিন্তু পেছন থেকে আরেকটা মিনি-বস আপনার পেটে Cursed Katana ঢুকিয়ে দেয়। মারাত্মক জখম হয়ে আপনার ক্ষত আর সারছে না—অভিশাপ কার্যকর!"
+  ],
+  arenaWaves3:[['finalGoon']],
+  linesAfter3:[
+   "আপনার বেস্ট ফ্রেন্ড শেষ শক্তি দিয়ে উঠে দাঁড়ায় এবং সেই শেষ শত্রুটিকেও মেরে ফেলে অভিশাপের চক্র পুরোপুরি ধ্বংস করে দেয়! আপনার ক্ষত ধীরে ধীরে সারতে শুরু করে।"
+  ]},
+{ n:7, title:"অধ্যায় ৭: কপ্টার রেস্কিউ ও শুভ পরিণয়", bg:'victory',
+  lines:[
+   "অভিশাপ কেটে যাওয়ার পর আপনার শরীরের ক্ষত কমতে শুরু করে। ঠিক সেই মুহূর্তে বিকট শব্দে আকাশে অবতরণ করে বিশেষ কপ টিম। কপ্টার নিয়ে তারা আপনাদের তিনজনকে রেস্কিউ করে এক গোপন হাসপাতালে নিয়ে যায়।",
+   "হাসপাতালে দীর্ঘ চিকিৎসার পর আপনি, উইচ এবং বেস্ট ফ্রেন্ড—সবাই পুরোপুরি সুস্থ হয়ে ওঠেন। রাতে সবাই মিলে হাসপাতাল প্রাঙ্গণে এক বিশাল 'ভিক্টরি পার্টি' আয়োজন করে।",
+   "পার্টি শেষে উইচ আপনার পাশে বসে লাজুক মুখে স্বীকার করে যে সে আপনাকে কতটা গভীরভাবে ভালোবাসে। আপনিও তাকে পরম ভালোবাসায় জড়িয়ে নেন।",
+   "পরদিন সকালে এক সুন্দর ঝলমলে রোদে আপনি ও উইচ বিবাহের বন্ধনে আবদ্ধ হচ্ছেন, আর আপনাদের ভালোবাসার এক সুন্দর নতুন অধ্যায় শুরু হচ্ছে!"
+  ]}
+];
+
+let ci=0, queue=[], qi=0;
+
+function queueForChapter(ch){
+  const q=[];
+  if(ch.n===2){
+    q.push({t:'line',text:ch.lines[0]});
+    q.push({t:'qte',data:ch.qte});
+    q.push({t:'line',text:ch.linesAfter[0]});
+  } else if(ch.n===3){
+    ch.lines.forEach(l=>q.push({t:'line',text:l}));
+    q.push({t:'unlock',key:ch.unlock,msg:ch.unlockMsg});
+  } else if(ch.n===4){
+    q.push({t:'line',text:ch.lines[0]});
+    q.push({t:'arena',waves:ch.arenaWaves,boss:false});
+    q.push({t:'line',text:ch.midLines[0]});
+    q.push({t:'unlock',key:ch.unlock,msg:ch.unlockMsg});
+    q.push({t:'fprompt'});
+    q.push({t:'line',text:ch.linesAfter[0]});
+    q.push({t:'unlock',key:ch.unlock2,msg:ch.unlockMsg2});
+  } else if(ch.n===5){
+    q.push({t:'line',text:ch.lines[0]});
+    q.push({t:'line',text:ch.lines[1]});
+    q.push({t:'puzzle'});
+    q.push({t:'line',text:ch.linesAfter[0]});
+  } else if(ch.n===6){
+    q.push({t:'line',text:ch.lines[0]});
+    q.push({t:'arena',waves:ch.bossWaves,boss:true});
+    q.push({t:'line',text:ch.linesAfter[0]});
+    q.push({t:'line',text:ch.linesAfter[1]});
+    q.push({t:'line',text:ch.linesAfter[2]});
+    q.push({t:'arena',waves:ch.arenaWaves2,boss:false});
+    q.push({t:'line',text:ch.linesAfter2Curse[0]});
+    q.push({t:'curse'});
+    q.push({t:'arena',waves:ch.arenaWaves3,boss:false});
+    q.push({t:'uncurse'});
+    q.push({t:'line',text:ch.linesAfter3[0]});
+  } else {
+    ch.lines.forEach(l=>q.push({t:'line',text:l}));
+  }
+  return q;
+}
+
+function loadChapter(idx){
+  ci = idx;
+  const ch = chapters[ci];
+  document.getElementById('chapter-tag').textContent = `অধ্যায় ${ch.n} / ${chapters.length}`;
+  currentTheme = themes[ch.bg];
+  queue = queueForChapter(ch);
+  qi = 0;
+  runStep();
+}
+function nextChapterOrEnd(){
+  if(ci+1 < chapters.length){ loadChapter(ci+1); }
+  else { endGame(); }
+}
+function endGame(){
+  G.mode='ended';
+  document.getElementById('dialogue-wrap').classList.remove('show');
+  document.getElementById('mid-panel').classList.remove('show');
+  currentTheme = themes.victory;
+  document.getElementById('end-screen').classList.remove('hidden');
+}
+
+function runStep(){
+  if(qi>=queue.length){ nextChapterOrEnd(); return; }
+  const s = queue[qi];
+  if(s.t==='line') showLine(s.text);
+  else if(s.t==='qte') showQte(s.data);
+  else if(s.t==='puzzle') showPuzzle();
+  else if(s.t==='fprompt') showFPrompt();
+  else if(s.t==='unlock'){ G.unlocked[s.key]=true; toast(s.msg); qi++; runStep(); }
+  else if(s.t==='curse'){ const p=G.player; p.cursed=true; p.hp=Math.min(p.hp,2); toast('☠️ হিলিং বন্ধ!'); qi++; runStep(); }
+  else if(s.t==='uncurse'){ const p=G.player; p.cursed=false; p.hp=Math.max(p.hp,15900); toast('✨ অভিশাপ ধ্বংস হলো!'); qi++; runStep(); }
+  else if(s.t==='arena') startArena(s.waves, ()=>{ qi++; runStep(); }, s.boss);
+  else if(p.hp<=1) toast('YOU DIED! 1LIFE GONE')
+}
+
+function showLine(text){
+  G.mode='cutscene';
+  document.getElementById('mid-panel').classList.remove('show');
+  const wrap = document.getElementById('dialogue-wrap');
+  wrap.classList.add('show');
+  document.getElementById('dlg-text').textContent = text;
+}
+document.getElementById('dlg-next').onclick = ()=>{ qi++; runStep(); };
+
+function showQte(data){
+  G.mode='qte';
+  document.getElementById('dialogue-wrap').classList.remove('show');
+  const mp = document.getElementById('mid-panel');
+  mp.classList.add('show');
+  document.getElementById('mid-title').textContent = data.instruction;
+  document.getElementById('mid-body').innerHTML = `
+    <div id="qte-track"><div id="qte-fill"></div></div>
+    <button class="mp-btn" id="qte-btn">⛓️ শক্তি প্রয়োগ করুন!</button>
+  `;
+  let count=0;
+  const fill = document.getElementById('qte-fill');
+  const btn = document.getElementById('qte-btn');
+  btn.onclick = ()=>{
+    count++;
+    fill.style.width = Math.min(100,(count/data.required)*100)+'%';
+    if(count>=data.required){
+      btn.disabled=true;
+      setTimeout(()=>{ mp.classList.remove('show'); qi++; runStep(); }, 450);
+    }
+  };
+}
+function showPuzzle(){
+  G.mode='puzzle';
+  document.getElementById('dialogue-wrap').classList.remove('show');
+  const mp = document.getElementById('mid-panel');
+  mp.classList.add('show');
+  document.getElementById('mid-title').textContent = 'Cursed Item দুটি দেওয়ালে বসান';
+  document.getElementById('mid-body').innerHTML = `
+    <div id="wall-row">
+      <div class="item-slot" id="slot-w1">?</div>
+      <div class="item-slot" id="slot-w2">?</div>
+    </div>
+    <div id="pool-row">
+      <div class="pool-item" id="item-p1">🔺</div>
+      <div class="pool-item" id="item-p2">🔻</div>
+    </div>
+  `;
+  let placed=0;
+  const check=()=>{ if(placed>=2){ setTimeout(()=>{ mp.classList.remove('show'); qi++; runStep(); },500);} };
+  document.getElementById('item-p1').onclick=function(){
+    if(this.classList.contains('used'))return;
+    document.getElementById('slot-w1').textContent='🔺';
+    document.getElementById('slot-w1').classList.add('filled');
+    this.classList.add('used'); placed++; check();
+  };
+  document.getElementById('item-p2').onclick=function(){
+    if(this.classList.contains('used'))return;
+    document.getElementById('slot-w2').textContent='🔻';
+    document.getElementById('slot-w2').classList.add('filled');
+    this.classList.add('used'); placed++; check();
+  };
+}
+
+function showFPrompt(){
+  G.mode='fprompt';
+  document.getElementById('dialogue-wrap').classList.remove('show');
+  const mp = document.getElementById('mid-panel');
+  mp.classList.add('show');
+  document.getElementById('mid-title').textContent = 'রক্তমাখা হাতে স্ক্রিনে বাটন প্রেস করুন...';
+  document.getElementById('mid-body').innerHTML = `<button class="mp-btn" id="f-btn" style="font-family:'Noto Serif Bengali',serif;font-size:22px;">F</button>`;
+  document.getElementById('f-btn').onclick = ()=>{
+    document.getElementById('f-btn').disabled=true;
+    document.getElementById('f-btn').textContent='🩸 প্রেতাত্তা আপনার উপর ভর করেছে!';
+    setTimeout(()=>{ mp.classList.remove('show'); qi++; runStep(); }, 900);
+  };
+}
+
+/* ============================================================
+   START / RESTART
+   ============================================================ */
+function startGame(){
+  document.getElementById('title-screen').classList.add('hidden');
+  resizeCanvas();
+  G.player.x = W/2; G.player.y = H/2;
+  loadChapter(0);
+}
+function restartGame(){
+  document.getElementById('end-screen').classList.add('hidden');
+  document.getElementById('title-screen').classList.remove('hidden');
+  document.getElementById('dialogue-wrap').classList.remove('show');
+  document.getElementById('mid-panel').classList.remove('show');
+  document.getElementById('boss-bar-wrap').classList.remove('show');
+  G.player = {x:400,y:250,r:17,hp:15900,maxHp:15900,fruit:1600,maxFruit:1600,v4:0,maxV4:100,ult:0,maxUlt:100,
+    speed:215, facing:0, atkCD:0, rumbleCD:0, v4Active:true, v4Timer:0, invuln:0, cursed:false};
+  G.enemies=[]; G.effects=[]; G.popups=[];
+  G.unlocked={rumble:true,v4:true,sanguine:true};
+  G.mode='cutscene';
+  currentTheme = themes.forest;
+}
+
+resizeCanvas();
+requestAnimationFrame(loop);
 </script>
-
-<script
-type="module"
-src="game.js">
-
-</script>
-
 </body>
 </html>
