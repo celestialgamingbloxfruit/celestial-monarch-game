@@ -3,12 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Celestial Monarch - 2D RPG Adventure</title>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
+    <title>Legendary Cursed Katana - Ultimate V120</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="game-container"></div>
+    <div id="game-container">
+        <!-- Secure Auth Panel -->
+        <div id="auth-panel" class="overlay">
+            <div class="auth-box" id="signup-form">
+                <h2>Account Registration</h2>
+                <input type="text" id="su-username" placeholder="Enter Unique Username">
+                <input type="email" id="su-email" placeholder="Enter Account Gmail">
+                <input type="password" id="su-pass" placeholder="Password">
+                <button onclick="handleAuthAction('signup')">Create Account</button>
+                <span class="toggle-link" onclick="toggleAuthPanel(false)">Already have an account? Log In</span>
+            </div>
+            <div class="auth-box" id="login-form" style="display:none;">
+                <h2>Secure Login Panel</h2>
+                <input type="text" id="lg-username" placeholder="Username">
+                <input type="password" id="lg-pass" placeholder="Password">
+                <button onclick="handleAuthAction('login')">Log In</button>
+                <span class="toggle-link" onclick="toggleAuthPanel(true)">Need an account? Sign Up</span>
+            </div>
+        </div>
+
+        <!-- Global UI Layout -->
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="hud">
+            <div class="bar-container">
+                <div id="hp-bar" class="bar-fill hp-fill"></div>
+                <div class="hud-text" id="hp-text">HP: 15900/15900</div>
+            </div>
+            <div class="charge-container" id="charge-nodes-wrapper">
+                <div class="charge-node"><div class="charge-fill"></div></div>
+                <div class="charge-node"><div class="charge-fill"></div></div>
+                <div class="charge-node"><div class="charge-fill"></div></div>
+                <div class="charge-node"><div class="charge-fill"></div></div>
+                <div class="charge-node"><div class="charge-fill"></div></div>
+            </div>
+            <div id="volt-display">Voltage: 0V / 3715V</div>
+            <div id="level-display" style="font-size:12px; font-weight:bold; color:#fff;">Level: 1</div>
+        </div>
+
+        <div id="leaderboard">
+            <h3>Bounty Leaderboard</h3>
+            <div id="lb-content"></div>
+        </div>
+
+        <!-- Dynamic Menu & Stats Component -->
+        <div id="menu-btn" onclick="toggleStatMenu()">📊 MENU</div>
+        <div id="stat-panel">
+            <span class="close-btn" onclick="toggleStatMenu()">✕</span>
+            <h4>Character Stats (<span id="stat-pts">0</span> Pts)</h4>
+            <div class="stat-row"><span>Melee:</span> <button onclick="upgradeStat('melee')">+</button> <span id="stat-melee">1</span></div>
+            <div class="stat-row"><span>Defense:</span> <button onclick="upgradeStat('def')">+</button> <span id="stat-def">1</span></div>
+            <div class="stat-row"><span>Sword:</span> <button onclick="upgradeStat('sword')">+</button> <span id="stat-sword">1</span></div>
+            <div class="stat-row"><span>Rumble:</span> <button onclick="upgradeStat('rumble')">+</button> <span id="stat-rumble">1</span></div>
+        </div>
+
+        <!-- 3D Item Interaction Inventory -->
+        <div id="inv-btn" onclick="toggleInventory()">🎒 INV</div>
+        <div id="inv-panel">
+            <span class="close-btn" onclick="toggleInventory()">✕</span>
+            <h4>Fruit Storage (<span id="inv-count">0</span>/1 Limit)</h4>
+            <div id="inv-list"></div>
+        </div>
+
+        <!-- Role Prompt UI -->
+        <div id="role-prompt">
+            <h3>APOCALYPSE EVENT IS LIVE!</h3>
+            <button class="role-btn btn-red" onclick="selectEventRole('aio')">Be AIO Boss</button>
+            <button class="role-btn btn-blue" onclick="selectEventRole('against')">Be Against</button>
+        </div>
+
+        <div id="story-box">
+            <div id="story-text">Loading game lore...</div>
+            <button class="story-btn" id="story-next-btn">Next ▶️</button>
+            <button class="story-btn" style="background:#ef4444;" onclick="triggerSkipCommand()">Skip ⏭️</button>
+        </div>
+
+        <div id="chat-area">
+            <div id="chat-log"></div>
+            <div id="chat-input-row">
+                <input type="text" id="chat-input" placeholder="Type chat or / command..." onkeydown="if(event.key==='Enter') sendChatMessage()">
+                <button id="vip-btn" onclick="toggleAdminPanel()">👑 VIP</button>
+            </div>
+        </div>
+
+        <div id="admin-panel">
+            <span id="close-admin" onclick="toggleAdminPanel()">✕</span>
+            <h4>Admin Exclusive Commands</h4>
+            <div class="cmd-item" onclick="quickAdminCmd('/heal')">/heal (Restore 15,900 HP)</div>
+            <div class="cmd-item" onclick="quickAdminCmd('/skip')">/skip (Bypass Story)</div>
+            <div class="cmd-item" onclick="quickAdminCmd('/skin_purple_rumble')">/skin_purple_rumble</div>
+            <div class="cmd-item" onclick="quickAdminCmd('/gift all')">/gift all (Server Boxes)</div>
+            <div class="cmd-item" onclick="quickAdminCmd('/rt2')">/rt2 (V4 Teleport)</div>
+            <div class="cmd-item" onclick="quickAdminCmd('/kill all')">/kill all (Mass Wipe)</div>
+        </div>
+    </div>
     <script src="game.js"></script>
 </body>
 </html>
